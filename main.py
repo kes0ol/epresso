@@ -1,9 +1,11 @@
 import sqlite3
 import sys
 
-from PyQt6 import uic
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QMainWindow, QApplication, QHeaderView, QTableWidgetItem, QDialog, QMessageBox
+
+from ui_addEditCoffeeForm import Ui_Dialog
+from ui_main import Ui_MainWindow
 
 ROAST = [
     "легкая",
@@ -19,10 +21,10 @@ IS_BEAN = [
 ]
 
 
-class AddUpdateRecord(QDialog):
+class AddUpdateRecord(QDialog, Ui_Dialog):
     def __init__(self, window_title, title="", roast=0, is_bean=0, description="", price=0, volume=0):
         super().__init__()
-        uic.loadUi("addEditCoffeeForm.ui", self)
+        self.setupUi(self)
         self.setWindowTitle(window_title)
         self.add_button.setText(window_title)
         self.init_ui()
@@ -45,10 +47,10 @@ class QTableWidgetItemWithData(QTableWidgetItem):
         self.setFlags(Qt.ItemFlag.ItemIsSelectable | Qt.ItemFlag.ItemIsEnabled)
 
 
-class Espresso(QMainWindow):
+class Espresso(QMainWindow, Ui_MainWindow):
     def __init__(self):
         super().__init__()
-        uic.loadUi("main.ui", self)
+        self.setupUi(self)
         self.init_ui()
 
     def add_button_clicked(self):
@@ -60,7 +62,7 @@ class Espresso(QMainWindow):
             description = aur.description_edit.toPlainText()
             price = aur.price_box.value() + (aur.price_cop_box.value() / 100)
             volume = aur.volume_box.value()
-            con = sqlite3.connect("coffee.sqlite")
+            con = sqlite3.connect("data/coffee.sqlite")
             con.cursor().execute("INSERT INTO coffee (title, roast, is_bean, description, price, volume) "
                                  "VALUES (?, ?, ?, ?, ?, ?)",
                                  (title, roast, is_bean, description, price, volume))
@@ -81,7 +83,7 @@ class Espresso(QMainWindow):
                 description = aur.description_edit.toPlainText()
                 price = aur.price_box.value() + (aur.price_cop_box.value() / 100)
                 volume = aur.volume_box.value()
-                con = sqlite3.connect("coffee.sqlite")
+                con = sqlite3.connect("data/coffee.sqlite")
                 con.cursor().execute("UPDATE coffee SET title = ?, roast = ?, is_bean = ?, description = ?, "
                                      "price = ?, volume = ? WHERE id = ?",
                                      (title, roast, is_bean, description, price, volume, id))
@@ -98,7 +100,7 @@ class Espresso(QMainWindow):
             dlg.setText("Вы точно хотите удалить эту запись?")
             dlg.setStandardButtons(QMessageBox.StandardButton.Ok | QMessageBox.StandardButton.Cancel)
             if dlg.exec() == QMessageBox.StandardButton.Ok:
-                con = sqlite3.connect("coffee.sqlite")
+                con = sqlite3.connect("data/coffee.sqlite")
                 con.cursor().execute("DELETE FROM coffee WHERE id = ?", (id,))
                 con.commit()
                 self.load_table()
@@ -119,7 +121,7 @@ class Espresso(QMainWindow):
         self.load_table()
 
     def create_table(self):
-        sqlite3.connect("coffee.sqlite").cursor().execute(
+        sqlite3.connect("data/coffee.sqlite").cursor().execute(
             """CREATE TABLE IF NOT EXISTS coffee (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             title TEXT NOT NULL,
@@ -134,7 +136,7 @@ class Espresso(QMainWindow):
         self.create_table()
         for i in range(self.table.rowCount()):
             self.table.removeRow(0)
-        cursor = sqlite3.connect("coffee.sqlite").cursor()
+        cursor = sqlite3.connect("data/coffee.sqlite").cursor()
         cursor.execute("SELECT * FROM coffee c ORDER BY c.id")
         for i in cursor.fetchall():
             ti = [t for t in i]
